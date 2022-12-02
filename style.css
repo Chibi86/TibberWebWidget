@@ -1,0 +1,73 @@
+#tibber-widget {
+    width: 450px;
+    background-color: black;
+    color: white;
+    padding: 15px;
+    font-family: System-Font-Light, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: none;
+}
+
+#tibber-header {
+    float: none;
+    clear: both;
+    width: 150px;
+    margin: 10px auto 15px;
+}
+
+#tibber-header img {
+    width: 150px;
+    text-align: center;
+}
+
+#widget-top-section {
+    height: 80px;
+}
+
+#widget-top-section > div {
+    float: left;
+    width: 32.5%;
+}
+
+#widget-top-section > div:last-of-type {
+  float: right;
+  width: 35%;
+}
+
+#current-price {
+  font-size: 22px;
+}
+
+#widget-graph-section {
+  margin-bottom: 10px;
+}
+
+#widget-graph-section h2 {
+  text-align: center;
+}
+
+#widget-update-info-section {
+  clear: both;
+  margin: auto;
+  width: 150px;
+}
+
+.info-text {
+  font-size: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+#tibber-token {
+  width: 335px;
+}
+
+#settings-button {
+  cursor: pointer;
+}
+
+@font-face { 
+  font-family: System-Font-Light;
+  src: url('System-Font-Light.ttf'); 
+}

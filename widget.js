@@ -77,7 +77,7 @@ class Widget {
   }
 
   async setupWidget() {
-    const priceEl = document.getElementById("price");
+    const currentPriceEl = document.getElementById("current-price");
     const minimumEl = document.getElementById("minimum");
     const maximumEl = document.getElementById("maximum");
     const updatedEl = document.getElementById("updated");
@@ -94,8 +94,8 @@ class Widget {
         hour: "20:00"
     }
     */
-    priceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
-    priceEl.style.color = this.colorByPrice(priceObject.price);
+    currentPriceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
+    currentPriceEl.style.color = this.colorByPrice(priceObject.price);
 
     updatedEl.innerHTML = priceObject.responseDate.toLocaleTimeString("sv-SE", { hour: '2-digit', minute: '2-digit' }); // exemple 20:00
 
