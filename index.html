@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="widget.js"></script>
+        <style>
+             @font-face { font-family: System-Font-Light; src: url('System-Font-Light.ttf'); }
+        </style>
+        <title>
+            Tibber widget page
+        </title>
+    </head>
+    <body>
+        <div id="tibber-widget" style="width: 450px; background-color: black; color: white; padding: 15px; font-family: System-Font-Light, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; display: none;">
+            <div style="float: none; clear: both; width: 150px; margin: 10px auto 15px;">
+                <img src="https://tibber.imgix.net/zq85bj8o2ot3/6FJ8FvW8CrwUdUu2Uqt2Ns/3cc8696405a42cb33b633d2399969f53/tibber_logo_blue_w1000.png" style="width: 150px; text-align: center;" alt="" />
+            </div>
+            <div style="height: 80px;">
+                <div style="float: left; width: 32.5%;">
+                    <div style="font-size: 22px;" id="price"></div>
+                    <div style="font-size: 12px">Öre/kWh</div>
+                    <span id="minimum"></span> |
+                    <span id="maximum"></span>
+                </div>
+                <div style="float: left; width: 32.5%;">
+                    <div><span id="day-consumption-cost"></span> kr</div>
+                    <div><span id="day-consumption-use"></span> kWh</div>
+                    Hitills idag
+                </div>
+                <div style="float: right; width: 35%;">
+                    <div><span id="month-consumption-cost"></span> kr</div>
+                    <div><span id="month-consumption-use"></span> kWh</div>
+                    Hitills denna månaden
+                </div>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <h2 style="text-align: center;">Timpriser:</h2>
+                <div id="graph"></div>
+            </div>
+            <div style="clear:both; margin: auto; width: 150px;">
+                Uppdaterat: <span id="updated"></span>
+            </div>
+        </div>
+        <div id="widget-settings">
+            <p>
+                <label for="tibber-token">Mata in tibber-token (<a href="https://developer.tibber.com">Får du här</a>):</label><br />
+                <input id="tibber-token" name="tibber-token" placeholder="5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE" style="width: 335px" />
+            </p>
+
+            <input type="submit" id="save-settings" value="Spara" />
+            <input type="button" id="cancel-settings" style="display: none;" value="Avbryt" />
+        </div>
+
+        <img src="settings-icon-dark-theme.png" id="settings-button" style="cursor: pointer;" alt="Inställningar" />
+    </body>
+</html>
