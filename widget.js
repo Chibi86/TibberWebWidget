@@ -42,8 +42,6 @@ class Widget {
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
     this.HOME_NR = homeNr ?? 0;
 
-
-
     // Calculation variables
     this.minPrice = 10000000;
     this.maxPrice = 0;
