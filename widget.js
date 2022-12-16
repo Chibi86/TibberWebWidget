@@ -34,8 +34,13 @@ class Widget {
     // * Customize end * //
 
     // Set by settingspage From LocalStorage
+    let homeNr = window.localStorage.getItem('HOME_NR');
+    if(!homeNr) {
+      window.localStorage.setItem('HOME_NR', 0);
+    }
+
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
-    this.HOME_NR = window.localStorage.getItem('HOME_NR');
+    this.HOME_NR = homeNr ?? 0;
 
     // Calculation variables
     this.minPrice = 10000000;
