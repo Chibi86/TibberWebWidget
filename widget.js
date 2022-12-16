@@ -8,17 +8,14 @@ class Widget {
     // this.SUN_LIMIT_1 = 5.00; // When solar is above this, it's white
     // this.SUN_LIMIT_2 = 12.00; // When solar is above this limit, it's yellow
     // this.HIGH_PRICE = 3.5; // Max price for red color
-    this.HOME_NR = 0;
     this.SOLOR_PRODUCER = false;
 
     // Colors
     // Hex-code for backgroundscolor on widget (#000000 for black)
     this.BACKGROUND_COLOR = "#000000";
 
-    // HEX-code for text color (#FFFFFF for white)
-    this.TEXT_COLOR = "#00FFFF";
-    this.TEXT_COLOR2 = "#FFC300";
-    this.TEXT_COLOR3 = "#C0C0C0";
+    // Hex-code for text color (#FFFFFF for white)
+    this.TEXT_COLOR = "#FFFFFF";
 
     // When price is over average price (red)
     this.TEXT_COLOR_HIGH_PRICE = "#de4035";
@@ -38,6 +35,7 @@ class Widget {
 
     // Set by settingspage From LocalStorage
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
+    this.HOME_NR = window.localStorage.getItem('HOME_NR');
 
     // Calculation variables
     this.minPrice = 10000000;
@@ -64,6 +62,7 @@ class Widget {
 
     // Settings variables
     this.tibberTokenEl = document.getElementById('tibber-token');
+    this.homeNrEl = document.getElementById('home-nr');
     this.settingsButton = document.getElementById('settings-button');
     this.settingsButton.addEventListener('click', this.openSettings.bind(this));
     this.saveButton = document.getElementById('save-settings');
@@ -186,16 +185,16 @@ class Widget {
         
         const responseDate = new Date();
         this.allPrices = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating.hourly.entries;
-        const price = res.data.viewer.homes[0].currentSubscription.priceInfo.current.total;
-        const time = res.data.viewer.homes[0].currentSubscription.priceInfo.current.startsAt;
+        const price = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.total;
+        const time = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.startsAt;
         const date = new Date(time);
         const hour = date.getHours();
 
-        this.dayConsumptionCost = res.data.viewer.homes[0].dayConsumption.pageInfo.totalCost;
-        this.dayConsumptionUse = res.data.viewer.homes[0].dayConsumption.pageInfo.totalConsumption;
+        this.dayConsumptionCost = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalCost;
+        this.dayConsumptionUse = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalConsumption;
 
-        this.monthConsumptionCost = res.data.viewer.homes[0].monthConsumption.pageInfo.totalCost;
-        this.monthConsumptionUse = res.data.viewer.homes[0].monthConsumption.pageInfo.totalConsumption;
+        this.monthConsumptionCost = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalCost;
+        this.monthConsumptionUse = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalConsumption;
 
         return {
           price,
@@ -211,7 +210,6 @@ class Widget {
 
   calculate() {
     this.dayConsumptionAvgPrice = Math.round(this.dayConsumptionCost / this.dayConsumptionUse * 100);
-    console.log(this.dayConsumptionAvgPrice, this.monthConsumptionAvgPrice);
     this.monthConsumptionAvgPrice = Math.round(this.monthConsumptionCost / this.monthConsumptionUse * 100);
 
     // Loop to find index for current hour
@@ -395,11 +393,15 @@ class Widget {
   // }
 
   saveSettingsLocalStorage() {
-    const tibberTokenEl = document.getElementById('tibber-token');
-    const tibberToken = tibberTokenEl.value;
-    window.localStorage.setItem('TIBBER_TOKEN', tibberToken);
+    const tibberToken = this.tibberTokenEl.value;
+
+    const homeNrEl = document.getElementById('home-nr');
+    const homeNr = homeNrEl.value;
   
     this.TIBBER_TOKEN = tibberToken;
+    this.HOME_NR = homeNr;
+    window.localStorage.setItem('TIBBER_TOKEN', tibberToken);
+    window.localStorage.setItem('HOME_NR', homeNr);
 
     this.setupWidget();
     this.toggleWidget(true);
@@ -418,6 +420,8 @@ class Widget {
   openSettings() {
     this.toggleWidget(false);
     this.tibberTokenEl.value = this.TIBBER_TOKEN;
+    this.homeNrEl.value = this.HOME_NR;
+
     this.cancelButton.style.display = 'block';
   }
 }
