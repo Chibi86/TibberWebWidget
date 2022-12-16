@@ -8,20 +8,19 @@ class Widget {
     // this.SUN_LIMIT_1 = 5.00; // When solar is above this, it's white
     // this.SUN_LIMIT_2 = 12.00; // When solar is above this limit, it's yellow
     // this.HIGH_PRICE = 3.5; // Max price for red color
-    this.HOME_NR = 0;
     this.SOLOR_PRODUCER = false;
 
     // Colors
-    // HTML-koden for bakgrunnsfarge på widget (#000000 er svart)
+    // Hex-code for backgroundscolor on widget (#000000 for black)
     this.BACKGROUND_COLOR = "#000000";
 
-    // HTML-koden for tekstfarge (#FFFFFF er hvit)
+    // Hex-code for text color (#FFFFFF for white)
     this.TEXT_COLOR = "#FFFFFF";
 
     // When price is over average price (red)
     this.TEXT_COLOR_HIGH_PRICE = "#de4035";
 
-    // When price is same or under average price (green)
+    // When price is under average price (green)
     this.TEXT_COLOR_LOW_PRICE = "#35de3b";
 
     // How many hour to show before and after current hour
@@ -36,6 +35,7 @@ class Widget {
 
     // Set by settingspage From LocalStorage
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
+    this.HOME_NR = window.localStorage.getItem('HOME_NR');
 
     // Calculation variables
     this.minPrice = 10000000;
@@ -47,6 +47,14 @@ class Widget {
     this.currentPriceIndex = 0;
     this.allPrices = [];
 
+    this.dayConsumptionCost = 0;
+    this.dayConsumptionUse = 0;
+    this.dayConsumptionAvgPrice = 0;
+
+    this.monthConsumptionCost = 0;
+    this.monthConsumptionUse = 0;
+    this.monthConsumptionAvgPrice = 0;
+
     this.thisHour = new Date()
     this.thisHour.setMinutes(0);
     this.thisHour.setSeconds(0);
@@ -54,6 +62,7 @@ class Widget {
 
     // Settings variables
     this.tibberTokenEl = document.getElementById('tibber-token');
+    this.homeNrEl = document.getElementById('home-nr');
     this.settingsButton = document.getElementById('settings-button');
     this.settingsButton.addEventListener('click', this.openSettings.bind(this));
     this.saveButton = document.getElementById('save-settings');
@@ -79,12 +88,16 @@ class Widget {
   async setupWidget() {
     const currentPriceEl = document.getElementById("current-price");
     const minimumEl = document.getElementById("minimum");
+    const minimumSpan = document.querySelector("#minimum span");
     const maximumEl = document.getElementById("maximum");
+    const maximumSpan = document.querySelector("#maximum span");
     const updatedEl = document.getElementById("updated");
     const dayConsumptionCostEl = document.getElementById("day-consumption-cost");
     const dayConsumptionUseEl = document.getElementById("day-consumption-use");
+    const dayConsumptionAvgPriceEl = document.getElementById("day-consumption-avg-price");
     const monthConsumptionCostEl = document.getElementById("month-consumption-cost");
     const monthConsumptionUseEl = document.getElementById("month-consumption-use");
+    const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
 
     let priceObject = await this.getCurrentPrice();
 
@@ -102,21 +115,23 @@ class Widget {
     // Get min/max price for today and eventually tomorrow (if exists)
     this.calculate();
 
-    minimumEl.innerText = (this.minPrice).toFixed(0);
+    minimumSpan.innerText = (this.minPrice).toFixed(0);
     minimumEl.style.color = this.colorByPrice(this.minPrice);
-    maximumEl.innerText = (this.maxPrice).toFixed(0);
+    maximumSpan.innerText = (this.maxPrice).toFixed(0);
     maximumEl.style.color = this.colorByPrice(this.maxPrice);
 
-    dayConsumptionCostEl.innerHTML = priceObject.dayConsumption.totalCost.toFixed(2).replace('.', ',');
-    dayConsumptionUseEl.innerHTML = priceObject.dayConsumption.totalConsumption.toFixed(2).replace('.', ',');
+    dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
+    dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
+    dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
 
-    monthConsumptionCostEl.innerHTML = priceObject.monthConsumption.totalCost.toFixed(2).replace('.', ',');
-    monthConsumptionUseEl.innerHTML = priceObject.monthConsumption.totalConsumption.toFixed(2).replace('.', ',');
+    monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
+    monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
+    monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
 
     await this.setupGraph();
   }
 
-  async getCurrentPrice() {
+  async getCurrentPrice(reTry = false) {
       const url = `https://api.tibber.com/v1-beta/gql`;
       const query = `{ \
           viewer { \
@@ -156,36 +171,47 @@ class Widget {
           } \
       }`;
 
-      const req = await fetch(url, {
+      try {
+        const req = await fetch(url, {
           method: 'post',
           headers: { 
-              "Authorization": "Bearer " + this.TIBBER_TOKEN,
-              "Content-Type": "application/json"
+            "Authorization": "Bearer " + this.TIBBER_TOKEN,
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({query: query})
-      });
+        });
 
-      const res = await req.json();
-      console.log(res);
-      const responseDate = new Date();
-      this.allPrices = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating.hourly.entries;
-      const price = res.data.viewer.homes[0].currentSubscription.priceInfo.current.total;
-      const time = res.data.viewer.homes[0].currentSubscription.priceInfo.current.startsAt;
-      const date = new Date(time);
-      const hour = date.getHours();
-      const dayConsumption = res.data.viewer.homes[0].dayConsumption.pageInfo;
-      const monthConsumption = res.data.viewer.homes[0].monthConsumption.pageInfo;
+        const res = await req.json();
+        
+        const responseDate = new Date();
+        this.allPrices = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating.hourly.entries;
+        const price = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.total;
+        const time = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.startsAt;
+        const date = new Date(time);
+        const hour = date.getHours();
 
-      return {
+        this.dayConsumptionCost = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalCost;
+        this.dayConsumptionUse = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalConsumption;
+
+        this.monthConsumptionCost = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalCost;
+        this.monthConsumptionUse = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalConsumption;
+
+        return {
           price,
           hour,
-          dayConsumption,
-          monthConsumption,
           responseDate
-      };
+        };
+      } catch {
+        if (!reTry) {
+          setTimeout(() => this.getCurrentPrice(true), 600);
+        }
+      }
   }
 
   calculate() {
+    this.dayConsumptionAvgPrice = Math.round(this.dayConsumptionCost / this.dayConsumptionUse * 100);
+    this.monthConsumptionAvgPrice = Math.round(this.monthConsumptionCost / this.monthConsumptionUse * 100);
+
     // Loop to find index for current hour
     this.currentPriceIndex = this.allPrices
       .findIndex(price => new Date(price.time).getTime() === this.thisHour.getTime());
@@ -255,7 +281,7 @@ class Widget {
     return await this.getGraph(labels, colors, pointSizes, avgPrices);
   }
 
-  async getGraph(labels, colors, pointSizes, avgPrices) {
+  async getGraph(labels, colors, pointSizes, avgPrices, reTry = false) {
     let url = "https://quickchart.io/chart?w="+ this.GRAPH_WIDTH + "&h=" + this.GRAPH_HEIGHT + "&devicePixelRatio=1.0&c="
     url += encodeURI(`{ \
     type:'line', \
@@ -265,14 +291,16 @@ class Widget {
         ], \
         datasets:[ \
           { \
-              label:'Öre per kWh', \
+              label:'Öre/kWh ', \
               steppedLine:true, \
               data:[ \
                 ${this.prices} \
               ], \
-              fill:false, \
+              fill:true, \
+              lineTension: 0.4, \
               borderColor:'cyan', \
               borderWidth: 7, \
+              backgroundColor: getGradientFillHelper('vertical', ['rgba(35, 187, 208, 0.5)', 'rgba(35, 187, 208, 0.15)', 'rgba(35, 187, 208, 0)']), \
               pointBackgroundColor:[ \
                 ${colors} \
               ], \
@@ -287,7 +315,8 @@ class Widget {
               ], \
               fill:false, \
               borderColor:'red', \
-              borderWidth: 7, \
+              borderDash:[2,2], \
+              borderWidth: 8, \
               pointRadius: 0 \
           } \
         ] \
@@ -303,17 +332,23 @@ class Widget {
           yAxes:[ \
               { \
                 ticks:{ \
-                    beginAtZero:false, \
-                    fontSize:100, \
-                    fontColor:'white' \
+                  beginAtZero:false, \
+                  fontSize:75, \
+                  autoSkip:true, \
+                  autoSkipPadding:200, \
+                  padding:50, \
+                  fontColor:'white' \
                 } \
               } \
           ], \
           xAxes:[ \
               { \
                 ticks:{ \
-                    fontSize:60, \
-                    fontColor:'white' \
+                  fontSize:75, \
+                  autoSkip:true, \
+                  autoSkipPadding:200, \
+                  padding:80, \
+                  fontColor:'white' \
                 } \
               } \
           ] \
@@ -321,23 +356,26 @@ class Widget {
     } \
     }`);
 
-    const response = await fetch(url);
-    const graphBlob = await response.blob();
-    const graphImageObjectURL = URL.createObjectURL(graphBlob);
-    const graph = document.createElement('img');
-    graph.src = graphImageObjectURL;
-    graph.style.width = "450px";
-    graph.style.height = "225px";
-
-    const graphDivEl = document.getElementById("graph");
-    graphDivEl.innerHTML = null;
-    graphDivEl.append(graph);
+    try {
+      const response = await fetch(url);
+      const graphBlob = await response.blob();
+      const graphImageObjectURL = URL.createObjectURL(graphBlob);
+      const graph = document.createElement('img');
+      graph.src = graphImageObjectURL;
+      graph.style.width = "450px";
+      graph.style.height = "225px";
+  
+      const graphDivEl = document.getElementById("graph");
+      graphDivEl.innerHTML = null;
+      graphDivEl.append(graph);
+    } catch {
+      if (!reTry) {
+        setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 600);
+      }
+    }
   }
 
   colorByPrice(price) {
-    // const capPrice = price > this.maxPrice ? this.maxPrice : price;
-    // return this.lerpColor("#de4035","#35de3b", capPrice / this.maxPrice);
-
     return price <= this.avgPrice ? this.TEXT_COLOR_LOW_PRICE : this.TEXT_COLOR_HIGH_PRICE;
   }
 
@@ -355,11 +393,15 @@ class Widget {
   // }
 
   saveSettingsLocalStorage() {
-    const tibberTokenEl = document.getElementById('tibber-token');
-    const tibberToken = tibberTokenEl.value;
-    window.localStorage.setItem('TIBBER_TOKEN', tibberToken);
+    const tibberToken = this.tibberTokenEl.value;
+
+    const homeNrEl = document.getElementById('home-nr');
+    const homeNr = homeNrEl.value;
   
     this.TIBBER_TOKEN = tibberToken;
+    this.HOME_NR = homeNr;
+    window.localStorage.setItem('TIBBER_TOKEN', tibberToken);
+    window.localStorage.setItem('HOME_NR', homeNr);
 
     this.setupWidget();
     this.toggleWidget(true);
@@ -378,6 +420,8 @@ class Widget {
   openSettings() {
     this.toggleWidget(false);
     this.tibberTokenEl.value = this.TIBBER_TOKEN;
+    this.homeNrEl.value = this.HOME_NR;
+
     this.cancelButton.style.display = 'block';
   }
 }
