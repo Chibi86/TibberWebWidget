@@ -206,7 +206,9 @@ class Widget {
           hour,
           responseDate
         };
-      } catch {
+      } catch(e) {
+        console.error(e);
+        
         if (!reTry) {
           setTimeout(() => this.getCurrentPrice(true), 600);
         }
@@ -373,7 +375,9 @@ class Widget {
       const graphDivEl = document.getElementById("graph");
       graphDivEl.innerHTML = null;
       graphDivEl.append(graph);
-    } catch {
+    } catch(e) {
+      console.error(e);
+
       if (!reTry) {
         setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 600);
       }
@@ -432,5 +436,9 @@ class Widget {
 }
 
 window.onload = () => {
-  new Widget();
+  try {
+    new Widget();
+  } catch(e) {
+    console.error(e);
+  }
 }
