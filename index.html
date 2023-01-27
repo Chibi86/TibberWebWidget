@@ -1,66 +1,75 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link type="text/css" rel="stylesheet" href="./style.css"  />
-        <script src="widget.js"></script>
-        <title>
-            Tibber widget page
-        </title>
-    </head>
-    <body>
-        <div id="tibber-widget" class="hidden">
-            <header id="tibber-header">
-                <img src="https://tibber.imgix.net/zq85bj8o2ot3/6FJ8FvW8CrwUdUu2Uqt2Ns/3cc8696405a42cb33b633d2399969f53/tibber_logo_blue_w1000.png" alt="Tibber" />
-                <span>Alla belopp ink. skatter och avgifter</span>
-            </header>
-            <section id="widget-top-section">
-                <div>
-                    JUST NU
-                    <div id="current-price"></div>
-                    <div id="minimum" class="smaller-text">MIN: <span></span></div>
-                    <div id="maximum" class="smaller-text">MAX: <span></span></div>
-                </div>
-                <div>
-                    DAGENS
-                    <div><span id="day-consumption-cost"></span> kr</div>
-                    <div><span id="day-consumption-use"></span> kWh</div>
-                    <div class="smaller-text">SNITT: <span id="day-consumption-avg-price"></span> öre</div>
-                </div>
-                <div>
-                    MÅNADENS
-                    <div><span id="month-consumption-cost"></span> kr</div>
-                    <div><span id="month-consumption-use"></span> kWh</div>
-                    <div class="smaller-text">SNITT: <span id="month-consumption-avg-price"></span> öre</div>
-                </div>
-            </section>
-            <section id="widget-graph-section">
-                <h2>Timpriser:</h2>
-                <div id="graph"></div>
-            </section>
-            <section id="widget-update-info-section">
-                Uppdaterat: <span id="updated"></span>
-            </section>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link type="text/css" rel="stylesheet" href="./style.css"  />
+    <script src="widget.js"></script>
+    <title>
+      Tibber widget page
+    </title>
+  </head>
+  <body>
+    <div id="tibber-widget" class="hidden">
+      <header id="tibber-header">
+        <img src="https://tibber.imgix.net/zq85bj8o2ot3/6FJ8FvW8CrwUdUu2Uqt2Ns/3cc8696405a42cb33b633d2399969f53/tibber_logo_blue_w1000.png" alt="Tibber" />
+        <span>Alla belopp ink. skatter och avgifter</span>
+      </header>
+      <section id="widget-top-section">
+        <div>
+          JUST NU
+          <div id="current-price"></div>
+          <div id="minimum" class="smaller-text">MIN: <span></span></div>
+          <div id="maximum" class="smaller-text">MAX: <span></span></div>
         </div>
-
-        <div id="widget-settings">
-            <p>
-                <label for="tibber-token">Mata in tibber-token (<a href="https://developer.tibber.com">Får du här</a>):</label><br />
-                <input id="tibber-token" name="tibber-token" placeholder="5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE" />
-            </p>
-
-            <p>
-                <label for="home-nr">Hemnummer (Om du har flera anslutna hem, börjar på 0):</label><br />
-                <input id="home-nr" name="home-nr" value="0" />
-            </p>
-
-            <input type="submit" id="save-settings" value="Spara" />
-            <input type="button" id="cancel-settings" class="hidden" value="Avbryt" />
+        <div>
+          DAGENS
+          <div><span id="day-consumption-cost"></span> kr</div>
+          <div><span id="day-consumption-use"></span> kWh</div>
+          <div class="smaller-text">SNITT: <span id="day-consumption-avg-price"></span> öre</div>
         </div>
+        <div>
+          MÅNADENS
+          <div><span id="month-consumption-cost"></span> kr</div>
+          <div><span id="month-consumption-use"></span> kWh</div>
+          <div class="smaller-text">SNITT: <span id="month-consumption-avg-price"></span> öre</div>
+        </div>
+      </section>
+      <section id="widget-graph-section">
+        <h2>Timpriser:</h2>
+        <div id="graph"></div>
+      </section>
+      <section id="widget-update-info-section">
+        Uppdaterat: <span id="updated"></span>
+      </section>
+    </div>
 
-        <footer id="bottom-menu">
-            <img src="icons/settings-icon-dark-theme.png" id="settings-button" alt="Inställningar" />
-        </footer>
-    </body>
+    <div id="widget-settings">
+      <p>
+        <label for="tibber-token">Mata in tibber-token (<a href="https://developer.tibber.com">Får du här</a>):</label><br />
+        <input id="tibber-token" name="tibber-token" placeholder="5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE" />
+      </p>
+
+      <p>
+        <label for="home-nr">Hemnummer (Om du har flera anslutna hem, börjar på 0):</label><br />
+        <input id="home-nr" name="home-nr" value="0" />
+      </p>
+
+      <p>
+        <label for="debug-mode">Utvecklare-mode:</label><br />
+        <input id="debug-mode" name="debug-mode" type="checkbox" />
+      </p>
+
+      <input type="submit" id="save-settings" value="Spara" />
+      <input type="button" id="cancel-settings" class="hidden" value="Avbryt" />
+    </div>
+
+    <footer id="bottom-menu">
+      <img src="icons/settings-icon-dark-theme.png" id="settings-button" alt="Inställningar" />
+    </footer>
+
+    <div id="error-logs" class="hidden">
+        <h3>Felmeddelanden:</h3>
+    </div>
+  </body>
 </html>
