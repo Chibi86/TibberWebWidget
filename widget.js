@@ -41,6 +41,7 @@ class Widget {
 
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
     this.HOME_NR = homeNr ?? 0;
+    this.DEBUG_MODE = window.localStorage.getItem('DEBUG_MODE') ?? false;
 
     // Calculation variables
     this.minPrice = 10000000;
@@ -68,12 +69,16 @@ class Widget {
     // Settings variables
     this.tibberTokenEl = document.getElementById('tibber-token');
     this.homeNrEl = document.getElementById('home-nr');
+    this.debugModeEl = document.getElementById('debug-mode');
     this.settingsButton = document.getElementById('settings-button');
     this.settingsButton.addEventListener('click', this.openSettings.bind(this));
     this.saveButton = document.getElementById('save-settings');
     this.saveButton.addEventListener('click', this.saveSettingsLocalStorage.bind(this));
     this.cancelButton = document.getElementById('cancel-settings');
     this.cancelButton.addEventListener('click', () => this.toggleWidget(true));
+
+    // Error logs
+    this.errorLogsEl = document.getElementById('error-logs');
 
     // Setup graphic
     const body = document.body;
@@ -91,49 +96,56 @@ class Widget {
   }
 
   async setupWidget() {
-    const currentPriceEl = document.getElementById("current-price");
-    const minimumEl = document.getElementById("minimum");
-    const minimumSpan = document.querySelector("#minimum span");
-    const maximumEl = document.getElementById("maximum");
-    const maximumSpan = document.querySelector("#maximum span");
-    const updatedEl = document.getElementById("updated");
-    const dayConsumptionCostEl = document.getElementById("day-consumption-cost");
-    const dayConsumptionUseEl = document.getElementById("day-consumption-use");
-    const dayConsumptionAvgPriceEl = document.getElementById("day-consumption-avg-price");
-    const monthConsumptionCostEl = document.getElementById("month-consumption-cost");
-    const monthConsumptionUseEl = document.getElementById("month-consumption-use");
-    const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
-
-    let priceObject = await this.getCurrentPrice();
-
-    /*
-    let priceObject = {
-        price: 3.45,
-        hour: "20:00"
+    try {
+      const currentPriceEl = document.getElementById("current-price");
+      const minimumEl = document.getElementById("minimum");
+      const minimumSpan = document.querySelector("#minimum span");
+      const maximumEl = document.getElementById("maximum");
+      const maximumSpan = document.querySelector("#maximum span");
+      const updatedEl = document.getElementById("updated");
+      const dayConsumptionCostEl = document.getElementById("day-consumption-cost");
+      const dayConsumptionUseEl = document.getElementById("day-consumption-use");
+      const dayConsumptionAvgPriceEl = document.getElementById("day-consumption-avg-price");
+      const monthConsumptionCostEl = document.getElementById("month-consumption-cost");
+      const monthConsumptionUseEl = document.getElementById("month-consumption-use");
+      const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
+  
+      let priceObject = await this.getCurrentPrice();
+  
+      if (!!priceObject) {
+        /*
+        let priceObject = {
+            price: 3.45,
+            hour: "20:00"
+        }
+        */
+        currentPriceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
+        currentPriceEl.style.color = this.colorByPrice(priceObject.price);
+  
+        updatedEl.innerHTML = priceObject.responseDate.toLocaleTimeString("sv-SE", { hour: '2-digit', minute: '2-digit' }); // exemple 20:00
+  
+        // Get min/max price for today and eventually tomorrow (if exists)
+        this.calculate();
+  
+        minimumSpan.innerText = (this.minPrice).toFixed(0);
+        minimumEl.style.color = this.colorByPrice(this.minPrice);
+        maximumSpan.innerText = (this.maxPrice).toFixed(0);
+        maximumEl.style.color = this.colorByPrice(this.maxPrice);
+  
+        dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
+        dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
+        dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
+  
+        monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
+        monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
+        monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
+  
+        await this.setupGraph();
+        this.toggleErrorLogs();
+      }
+    } catch(e) {
+      this.addErrorLog(e);
     }
-    */
-    currentPriceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
-    currentPriceEl.style.color = this.colorByPrice(priceObject.price);
-
-    updatedEl.innerHTML = priceObject.responseDate.toLocaleTimeString("sv-SE", { hour: '2-digit', minute: '2-digit' }); // exemple 20:00
-
-    // Get min/max price for today and eventually tomorrow (if exists)
-    this.calculate();
-
-    minimumSpan.innerText = (this.minPrice).toFixed(0);
-    minimumEl.style.color = this.colorByPrice(this.minPrice);
-    maximumSpan.innerText = (this.maxPrice).toFixed(0);
-    maximumEl.style.color = this.colorByPrice(this.maxPrice);
-
-    dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
-    dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
-    dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
-
-    monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
-    monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
-    monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
-
-    await this.setupGraph();
   }
 
   async getCurrentPrice(reTry = false) {
@@ -186,6 +198,10 @@ class Widget {
           body: JSON.stringify({query: query})
         });
 
+        if(!req || !req.ok) {
+          throw 'Misslyckades att få data från Tibber, kontrollera token';
+        }
+
         const res = await req.json();
         
         const responseDate = new Date();
@@ -207,10 +223,11 @@ class Widget {
           responseDate
         };
       } catch(e) {
-        console.error(e);
-        
         if (!reTry) {
           setTimeout(() => this.getCurrentPrice(true), 600);
+        } else {
+          this.addErrorLog(e);
+          throw e;
         }
       }
   }
@@ -230,6 +247,7 @@ class Widget {
     }
 
     let avgPrice = 0;
+    this.prices = [];
 
     for (let i = this.startIndex; i <= this.endIndex; i++) {
       //   if (this.SOLOR_PRODUCER) {
@@ -367,6 +385,11 @@ class Widget {
 
     try {
       const response = await fetch(url);
+
+      if(!response || !response.ok) {
+        throw 'Misslyckades att få graph, testa ladda om sidan.';
+      }
+
       const graphBlob = await response.blob();
       const graphImageObjectURL = URL.createObjectURL(graphBlob);
       const graph = document.createElement('img');
@@ -378,10 +401,11 @@ class Widget {
       graphDivEl.innerHTML = null;
       graphDivEl.append(graph);
     } catch(e) {
-      console.error(e);
-
       if (!reTry) {
-        setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 600);
+        setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 5000);
+      } else {
+        this.addErrorLog(e);
+        throw e;
       }
     }
   }
@@ -390,29 +414,14 @@ class Widget {
     return price <= this.avgPrice ? this.TEXT_COLOR_LOW_PRICE : this.TEXT_COLOR_HIGH_PRICE;
   }
 
-  // lerpColor(a, b, amount) {
-
-  //     var ah = parseInt(a.replace(/#/g, ''), 16),
-  //         ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
-  //         bh = parseInt(b.replace(/#/g, ''), 16),
-  //         br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
-  //         rr = ar + amount * (br - ar),
-  //         rg = ag + amount * (bg - ag),
-  //         rb = ab + amount * (bb - ab);
-
-  //     return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
-  // }
-
   saveSettingsLocalStorage() {
-    const tibberToken = this.tibberTokenEl.value;
+    this.TIBBER_TOKEN = this.tibberTokenEl.value;
+    this.HOME_NR = this.homeNrEl.value;
+    this.DEBUG_MODE = this.debugModeEl.checked;
 
-    const homeNrEl = document.getElementById('home-nr');
-    const homeNr = homeNrEl.value;
-  
-    this.TIBBER_TOKEN = tibberToken;
-    this.HOME_NR = homeNr;
-    window.localStorage.setItem('TIBBER_TOKEN', tibberToken);
-    window.localStorage.setItem('HOME_NR', homeNr);
+    window.localStorage.setItem('TIBBER_TOKEN', this.TIBBER_TOKEN);
+    window.localStorage.setItem('HOME_NR', this.HOME_NR);
+    window.localStorage.setItem('DEBUG_MODE', this.DEBUG_MODE);
 
     this.setupWidget();
     this.toggleWidget(true);
@@ -428,19 +437,26 @@ class Widget {
     tibberWidget.style.display = showWidget ? 'block' : 'none';
   }
 
+  toggleErrorLogs() {
+    this.errorLogsEl.classList.toggle('hidden', !this.DEBUG_MODE);
+  }
+
   openSettings() {
     this.toggleWidget(false);
     this.tibberTokenEl.value = this.TIBBER_TOKEN;
     this.homeNrEl.value = this.HOME_NR;
+    this.debugModeEl.checked = this.DEBUG_MODE;
 
     this.cancelButton.style.display = 'block';
+  }
+
+  addErrorLog(e) {
+    const errorDiv = document.createElement('div');
+    errorDiv.innerText = e.toString();
+    this.errorLogsEl.append(errorDiv);
   }
 }
 
 window.onload = () => {
-  try {
-    new Widget();
-  } catch(e) {
-    console.error(e);
-  }
+  new Widget();
 }
