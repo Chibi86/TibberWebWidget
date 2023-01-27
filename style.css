@@ -1,13 +1,30 @@
 #tibber-widget {
-  width: 450px;
-  height: 480px;
+  width: 200px;
   background-color: black;
   color: white;
   padding: 5px 15px 15px;
   font-family: System-Font-Light, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+#tibber-widget.shows-day {
+  width: 250px;
+}
+
+#tibber-widget.shows-montly {
+  width: 270px;
+}
+
+#tibber-widget.shows-day.shows-montly,
+#tibber-widget.shows-graph {
+  width: 450px;
+}
+
+#tibber-widget:not(.shows-day.shows-montly):not(.shows-graph) #tibber-header > span {
+  display: none;
+}
+
 #tibber-header {
+  min-height: 50px;
   float: none;
   clear: both;
   margin: 0 0 10px;
@@ -27,20 +44,24 @@
 
 #widget-top-section > div {
   float: left;
-  width: 32.5%;
+  padding: 0 25px;
 }
 
-#widget-top-section > div:last-of-type {
+#tibber-widget.shows-day:not(.shows-montly) #widget-top-section > div#day-consumption,
+#widget-top-section > div#montly-consumption {
   float: right;
-  width: 35%;
+  padding-right: 0;
+}
+
+#tibber-widget:not(.shows-day):not(.shows-montly) #widget-top-section > div {
+  width: 80px;
+  float: none;
+  padding: 0;
+  margin: 0 auto;
 }
 
 #current-price {
   font-size: 20px;
-}
-
-#widget-graph-section {
-  margin-bottom: 10px;
 }
 
 #widget-graph-section h2 {
@@ -51,6 +72,10 @@
   clear: both;
   margin: auto;
   width: 150px;
+}
+
+#widget-update-info-section {
+  margin-top: 10px;
 }
 
 .smaller-text {

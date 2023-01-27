@@ -16,26 +16,26 @@
         <span>Alla belopp ink. skatter och avgifter</span>
       </header>
       <section id="widget-top-section">
-        <div>
+        <div id="current">
           JUST NU
           <div id="current-price"></div>
           <div id="minimum" class="smaller-text">MIN: <span></span></div>
           <div id="maximum" class="smaller-text">MAX: <span></span></div>
         </div>
-        <div>
+        <div id="day-consumption" class="hidden">
           DAGENS
           <div><span id="day-consumption-cost"></span> kr</div>
           <div><span id="day-consumption-use"></span> kWh</div>
           <div class="smaller-text">SNITT: <span id="day-consumption-avg-price"></span> öre</div>
         </div>
-        <div>
+        <div id="month-consumption" class="hidden">
           MÅNADENS
           <div><span id="month-consumption-cost"></span> kr</div>
           <div><span id="month-consumption-use"></span> kWh</div>
           <div class="smaller-text">SNITT: <span id="month-consumption-avg-price"></span> öre</div>
         </div>
       </section>
-      <section id="widget-graph-section">
+      <section id="widget-graph-section" class="hidden">
         <h2>Timpriser:</h2>
         <div id="graph"></div>
       </section>
@@ -45,6 +45,8 @@
     </div>
 
     <div id="widget-settings">
+      <h3>Inställningar:</h3>
+
       <p>
         <label for="tibber-token">Mata in tibber-token (<a href="https://developer.tibber.com">Får du här</a>):</label><br />
         <input id="tibber-token" name="tibber-token" placeholder="5K4MVS-OjfWhK_4yrjOlFe1F6kJXPVf7eQYggo8ebAE" />
@@ -58,6 +60,21 @@
       <p>
         <label for="debug-mode">Utvecklare-mode:</label><br />
         <input id="debug-mode" name="debug-mode" type="checkbox" />
+      </p>
+
+      <p>
+        <label for="show-graph">Visa diagram:</label><br />
+        <input id="show-graph" name="show-graph" type="checkbox" checked />
+      </p>
+
+      <p>
+        <label for="show-day-consumption">Visa dagens konsumption:</label><br />
+        <input id="show-day-consumption" name="show-day-consumption" type="checkbox" checked />
+      </p>
+
+      <p>
+        <label for="show-montly-consumption">Visa månadens konsumption:</label><br />
+        <input id="show-montly-consumption" name="show-montly-consumption" type="checkbox" checked />
       </p>
 
       <input type="submit" id="save-settings" value="Spara" />

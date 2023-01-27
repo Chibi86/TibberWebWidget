@@ -33,15 +33,13 @@ class Widget {
 
     // * Customize end * //
 
-    // Set by settingspage From LocalStorage
-    let homeNr = window.localStorage.getItem('HOME_NR');
-    if(!homeNr) {
-      window.localStorage.setItem('HOME_NR', 0);
-    }
-
+    // Settings From LocalStorage
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
-    this.HOME_NR = homeNr ?? 0;
-    this.DEBUG_MODE = window.localStorage.getItem('DEBUG_MODE') ?? false;
+    this.HOME_NR = window.localStorage.getItem('HOME_NR') ?? 0;
+    this.DEBUG_MODE = this.convertStringToBoolean(window.localStorage.getItem('DEBUG_MODE'), false);
+    this.SHOW_GRAPH = this.convertStringToBoolean(window.localStorage.getItem('SHOW_GRAPH'), true);
+    this.SHOW_DAY_CONSUMPTION = this.convertStringToBoolean(window.localStorage.getItem('SHOW_DAY_CONSUMPTION'), true);
+    this.SHOW_MONTLY_CONSUMPTION = this.convertStringToBoolean(window.localStorage.getItem('SHOW_MONTLY_CONSUMPTION'), true);
 
     // Calculation variables
     this.minPrice = 10000000;
@@ -66,19 +64,36 @@ class Widget {
     this.thisHour.setSeconds(0);
     this.thisHour.setMilliseconds(0);
 
-    // Settings variables
+    /* Widget elements */
+    this.tibberWidgetEl = document.getElementById('tibber-widget');
+    this.headerSpanEl = document.querySelector("#tibber-header span");
+
+    // Widget top section elements
+    this.topSectionEl = document.getElementById("widget-top-section");
+    this.currentEl = document.getElementById("current");
+    this.dayConsumptionEl = document.getElementById("day-consumption");
+    this.monthConsumptionEl = document.getElementById("month-consumption");
+
+    // Graph elements
+    this.graphSectionEl = document.getElementById("widget-graph-section");
+    this.graphDivEl = document.getElementById("graph");
+
+    // Error logs elements
+    this.errorLogsEl = document.getElementById('error-logs');
+
+    // Settings elements
     this.tibberTokenEl = document.getElementById('tibber-token');
     this.homeNrEl = document.getElementById('home-nr');
     this.debugModeEl = document.getElementById('debug-mode');
-    this.settingsButton = document.getElementById('settings-button');
-    this.settingsButton.addEventListener('click', this.openSettings.bind(this));
+    this.showGraphEl = document.getElementById('show-graph');
+    this.showDayConsumptionEl = document.getElementById('show-day-consumption');
+    this.showMontlyConsumptionEl = document.getElementById('show-montly-consumption');
+    this.settingsButtonEl = document.getElementById('settings-button');
+    this.settingsButtonEl.addEventListener('click', this.openSettings.bind(this));
     this.saveButton = document.getElementById('save-settings');
     this.saveButton.addEventListener('click', this.saveSettingsLocalStorage.bind(this));
     this.cancelButton = document.getElementById('cancel-settings');
     this.cancelButton.addEventListener('click', () => this.toggleWidget(true));
-
-    // Error logs
-    this.errorLogsEl = document.getElementById('error-logs');
 
     // Setup graphic
     const body = document.body;
@@ -119,29 +134,37 @@ class Widget {
             hour: "20:00"
         }
         */
-        currentPriceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
-        currentPriceEl.style.color = this.colorByPrice(priceObject.price);
-  
-        updatedEl.innerHTML = priceObject.responseDate.toLocaleTimeString("sv-SE", { hour: '2-digit', minute: '2-digit' }); // exemple 20:00
-  
+
         // Get min/max price for today and eventually tomorrow (if exists)
         this.calculate();
+
+        currentPriceEl.innerHTML = (priceObject.price * 100).toFixed(0); // 1.35
+        currentPriceEl.style.color = this.colorByPrice(priceObject.price * 100);
   
         minimumSpan.innerText = (this.minPrice).toFixed(0);
         minimumEl.style.color = this.colorByPrice(this.minPrice);
         maximumSpan.innerText = (this.maxPrice).toFixed(0);
         maximumEl.style.color = this.colorByPrice(this.maxPrice);
   
-        dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
-        dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
-        dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
+        if (this.SHOW_DAY_CONSUMPTION) {
+          dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
+          dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
+          dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
+        }
   
-        monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
-        monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
-        monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
-  
-        await this.setupGraph();
-        this.toggleErrorLogs();
+        if (this.SHOW_MONTLY_CONSUMPTION) {
+          monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
+          monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
+          monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
+        }
+
+        if (this.SHOW_GRAPH) {
+          await this.setupGraph();
+        }
+
+        this.setupGraphic();
+
+        updatedEl.innerHTML = priceObject.responseDate.toLocaleTimeString("sv-SE", { hour: '2-digit', minute: '2-digit' }); // exemple 20:00
       }
     } catch(e) {
       this.addErrorLog(e);
@@ -248,6 +271,8 @@ class Widget {
 
     let avgPrice = 0;
     this.prices = [];
+    this.minPrice = 100000000;
+    this.maxPrice = 0;
 
     for (let i = this.startIndex; i <= this.endIndex; i++) {
       //   if (this.SOLOR_PRODUCER) {
@@ -267,6 +292,19 @@ class Widget {
     }
 
     this.avgPrice = Math.round(avgPrice / (this.prices.length) * 100);
+  }
+
+  setupGraphic() {
+    this.toggleWidget(true);
+
+    this.toggleElement(this.dayConsumptionEl, this.SHOW_DAY_CONSUMPTION);
+    this.toggleElement(this.monthConsumptionEl, this.SHOW_MONTLY_CONSUMPTION);
+    this.toggleElement(this.graphSectionEl, this.SHOW_GRAPH);
+    this.toggleElement(this.errorLogsEl, this.DEBUG_MODE);
+
+    this.tibberWidgetEl.classList.toggle('shows-day', this.SHOW_DAY_CONSUMPTION);
+    this.tibberWidgetEl.classList.toggle('shows-montly', this.SHOW_MONTLY_CONSUMPTION);
+    this.tibberWidgetEl.classList.toggle('shows-graph', this.SHOW_GRAPH);
   }
 
   async setupGraph() {
@@ -396,10 +434,9 @@ class Widget {
       graph.src = graphImageObjectURL;
       graph.style.width = "450px";
       graph.style.height = "225px";
-  
-      const graphDivEl = document.getElementById("graph");
-      graphDivEl.innerHTML = null;
-      graphDivEl.append(graph);
+      
+      this.graphDivEl.innerHTML = null;
+      this.graphDivEl.append(graph);
     } catch(e) {
       if (!reTry) {
         setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 5000);
@@ -418,27 +455,33 @@ class Widget {
     this.TIBBER_TOKEN = this.tibberTokenEl.value;
     this.HOME_NR = this.homeNrEl.value;
     this.DEBUG_MODE = this.debugModeEl.checked;
+    this.SHOW_GRAPH = this.showGraphEl.checked;
+    this.SHOW_DAY_CONSUMPTION = this.showDayConsumptionEl.checked;
+    this.SHOW_MONTLY_CONSUMPTION = this.showMontlyConsumptionEl.checked;
 
     window.localStorage.setItem('TIBBER_TOKEN', this.TIBBER_TOKEN);
     window.localStorage.setItem('HOME_NR', this.HOME_NR);
     window.localStorage.setItem('DEBUG_MODE', this.DEBUG_MODE);
+    window.localStorage.setItem('SHOW_GRAPH', this.SHOW_GRAPH);
+    window.localStorage.setItem('SHOW_DAY_CONSUMPTION', this.SHOW_DAY_CONSUMPTION);
+    window.localStorage.setItem('SHOW_MONTLY_CONSUMPTION', this.SHOW_MONTLY_CONSUMPTION);
+
+    if (!this.SHOW_GRAPH) {
+      this.graphDivEl.innerHTML = '';
+    }
 
     this.setupWidget();
-    this.toggleWidget(true);
   };
 
   toggleWidget(showWidget = true) {
     const widgetSettings = document.getElementById('widget-settings');
-    widgetSettings.style.display = showWidget ? 'none' : 'block';
-
-    this.settingsButton.style.display = showWidget ? 'block' : 'none';
-  
-    const tibberWidget = document.getElementById('tibber-widget');
-    tibberWidget.style.display = showWidget ? 'block' : 'none';
+    this.toggleElement(widgetSettings, !showWidget);
+    this.toggleElement(this.settingsButtonEl, showWidget);
+    this.toggleElement(this.tibberWidgetEl, showWidget);
   }
 
-  toggleErrorLogs() {
-    this.errorLogsEl.classList.toggle('hidden', !this.DEBUG_MODE);
+  toggleElement(el, show) {
+    el.classList.toggle('hidden', !show);
   }
 
   openSettings() {
@@ -446,14 +489,23 @@ class Widget {
     this.tibberTokenEl.value = this.TIBBER_TOKEN;
     this.homeNrEl.value = this.HOME_NR;
     this.debugModeEl.checked = this.DEBUG_MODE;
+    this.showGraphEl.checked = this.SHOW_GRAPH;
+    this.showDayConsumptionEl.checked = this.SHOW_DAY_CONSUMPTION;
+    this.showMontlyConsumptionEl.checked = this.SHOW_MONTLY_CONSUMPTION;
 
-    this.cancelButton.style.display = 'block';
+    this.toggleElement(this.cancelButton, true);
   }
 
   addErrorLog(e) {
     const errorDiv = document.createElement('div');
     errorDiv.innerText = e.toString();
     this.errorLogsEl.append(errorDiv);
+  }
+
+  convertStringToBoolean(str, defaultValue) {
+    str = str ?? `${defaultValue}`;
+
+    return str === 'true';
   }
 }
 
