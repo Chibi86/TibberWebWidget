@@ -246,12 +246,14 @@ class Widget {
       this.endIndex = (this.allPrices.length-1)
     }
 
+    let avgPrice = 0;
+
     for (let i = this.startIndex; i <= this.endIndex; i++) {
       //   if (this.SOLOR_PRODUCER) {
       //     this.allPrices[i].total = this.allPrices[i].total+(NETT_KWH/100);
       //   }
 
-      this.avgPrice += this.allPrices[i].total
+      avgPrice += this.allPrices[i].total
       this.prices.push(Math.round(this.allPrices[i].total * 100));
 
       if (this.allPrices[i].total * 100 < this.minPrice) {
@@ -263,7 +265,7 @@ class Widget {
       }
     }
 
-    this.avgPrice = Math.round(this.avgPrice / (this.prices.length) * 100);
+    this.avgPrice = Math.round(avgPrice / (this.prices.length) * 100);
   }
 
   async setupGraph() {
