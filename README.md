@@ -2,7 +2,11 @@
 
 Web widget for Tibber to use in Widgets which can show webpages.
 
-![Screenshot](screenshot.png)
+![Screenshot](screenshots/screenshot_1.png)
+![Screenshot](screenshots/screenshot_2.png)
+![Screenshot](screenshots/screenshot_3.png)
+![Screenshot](screenshots/screenshot_4.png)
+![Screenshot](screenshots/screenshot_5.png)
 
 ### Based on
 https://github.com/svenove/iOSTibberWidget
