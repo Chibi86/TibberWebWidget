@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link type="text/css" rel="stylesheet" href="./style.css"  />
-    <script src="widget.js"></script>
+    <script src="script/main.js" type="module" crossorigin></script>
     <title>
       Tibber widget page
     </title>
+    <link rel="shortcut icon" type="image/ico" href="favicon.ico"/>
   </head>
   <body>
     <div id="tibber-widget" class="hidden">
@@ -55,11 +56,6 @@
       <p>
         <label for="home-nr">Hemnummer (Om du har flera anslutna hem, börjar på 0):</label><br />
         <input id="home-nr" name="home-nr" value="0" />
-      </p>
-
-      <p>
-        <label for="debug-mode">Utvecklare-mode:</label><br />
-        <input id="debug-mode" name="debug-mode" type="checkbox" />
       </p>
 
       <p>
