@@ -1,5 +1,7 @@
-class Widget {
-  constructor() {    
+export default class Widget {
+  constructor(beta = false) {
+    this.BETA = beta;
+
     // * Customize here * //
 
     // this.LIMIT_1 = 1.00; // When price is above this, it's orange
@@ -36,7 +38,6 @@ class Widget {
     // Settings From LocalStorage
     this.TIBBER_TOKEN = window.localStorage.getItem('TIBBER_TOKEN');
     this.HOME_NR = window.localStorage.getItem('HOME_NR') ?? 0;
-    this.DEBUG_MODE = this.convertStringToBoolean(window.localStorage.getItem('DEBUG_MODE'), false);
     this.SHOW_GRAPH = this.convertStringToBoolean(window.localStorage.getItem('SHOW_GRAPH'), true);
     this.SHOW_DAY_CONSUMPTION = this.convertStringToBoolean(window.localStorage.getItem('SHOW_DAY_CONSUMPTION'), true);
     this.SHOW_MONTLY_CONSUMPTION = this.convertStringToBoolean(window.localStorage.getItem('SHOW_MONTLY_CONSUMPTION'), true);
@@ -84,7 +85,6 @@ class Widget {
     // Settings elements
     this.tibberTokenEl = document.getElementById('tibber-token');
     this.homeNrEl = document.getElementById('home-nr');
-    this.debugModeEl = document.getElementById('debug-mode');
     this.showGraphEl = document.getElementById('show-graph');
     this.showDayConsumptionEl = document.getElementById('show-day-consumption');
     this.showMontlyConsumptionEl = document.getElementById('show-montly-consumption');
@@ -300,7 +300,7 @@ class Widget {
     this.toggleElement(this.dayConsumptionEl, this.SHOW_DAY_CONSUMPTION);
     this.toggleElement(this.monthConsumptionEl, this.SHOW_MONTLY_CONSUMPTION);
     this.toggleElement(this.graphSectionEl, this.SHOW_GRAPH);
-    this.toggleElement(this.errorLogsEl, this.DEBUG_MODE);
+    this.toggleElement(this.errorLogsEl, this.BETA);
 
     this.tibberWidgetEl.classList.toggle('shows-day', this.SHOW_DAY_CONSUMPTION);
     this.tibberWidgetEl.classList.toggle('shows-montly', this.SHOW_MONTLY_CONSUMPTION);
@@ -454,14 +454,12 @@ class Widget {
   saveSettingsLocalStorage() {
     this.TIBBER_TOKEN = this.tibberTokenEl.value;
     this.HOME_NR = this.homeNrEl.value;
-    this.DEBUG_MODE = this.debugModeEl.checked;
     this.SHOW_GRAPH = this.showGraphEl.checked;
     this.SHOW_DAY_CONSUMPTION = this.showDayConsumptionEl.checked;
     this.SHOW_MONTLY_CONSUMPTION = this.showMontlyConsumptionEl.checked;
 
     window.localStorage.setItem('TIBBER_TOKEN', this.TIBBER_TOKEN);
     window.localStorage.setItem('HOME_NR', this.HOME_NR);
-    window.localStorage.setItem('DEBUG_MODE', this.DEBUG_MODE);
     window.localStorage.setItem('SHOW_GRAPH', this.SHOW_GRAPH);
     window.localStorage.setItem('SHOW_DAY_CONSUMPTION', this.SHOW_DAY_CONSUMPTION);
     window.localStorage.setItem('SHOW_MONTLY_CONSUMPTION', this.SHOW_MONTLY_CONSUMPTION);
@@ -488,7 +486,6 @@ class Widget {
     this.toggleWidget(false);
     this.tibberTokenEl.value = this.TIBBER_TOKEN;
     this.homeNrEl.value = this.HOME_NR;
-    this.debugModeEl.checked = this.DEBUG_MODE;
     this.showGraphEl.checked = this.SHOW_GRAPH;
     this.showDayConsumptionEl.checked = this.SHOW_DAY_CONSUMPTION;
     this.showMontlyConsumptionEl.checked = this.SHOW_MONTLY_CONSUMPTION;
@@ -507,8 +504,4 @@ class Widget {
 
     return str === 'true';
   }
-}
-
-window.onload = () => {
-  new Widget();
 }
