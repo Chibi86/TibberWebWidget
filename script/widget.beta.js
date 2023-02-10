@@ -1,7 +1,6 @@
 export default class Widget {
     constructor(beta = false) {
       this.beta = beta;
-      console.log(this.beta ? 'Beta' : 'Not Beta');
 
       // * Customize here * //
   
@@ -53,13 +52,17 @@ export default class Widget {
       this.currentPriceIndex = 0;
       this.allPrices = [];
   
-      this.dayConsumptionCost = 0;
-      this.dayConsumptionUse = 0;
-      this.dayConsumptionAvgPrice = 0;
+      this.dayConsumption = {
+        cost: 0,
+        use: 0,
+        avgPrice: 0
+      };
   
-      this.monthConsumptionCost = 0;
-      this.monthConsumptionUse = 0;
-      this.monthConsumptionAvgPrice = 0;
+      this.monthConsumption = {
+        cost: 0,
+        use: 0,
+        avgPrice: 0
+      };
   
       this.thisHour = new Date()
       this.thisHour.setMinutes(0);
@@ -112,7 +115,7 @@ export default class Widget {
       }
     }
   
-    async setupWidget() {
+    async setupWidget(reTry = false) {
       try {
         const currentPriceEl = document.getElementById("current-price");
         const minimumEl = document.getElementById("minimum");
@@ -127,16 +130,38 @@ export default class Widget {
         const monthConsumptionUseEl = document.getElementById("month-consumption-use");
         const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
     
-        let priceObject = await this.getCurrentPrice();
+        let priceObject = await this.getCurrentPrice(reTry);
     
         if (!!priceObject) {
           /*
           let priceObject = {
               price: 3.45,
-              hour: "20:00"
+              hour: "20:00",
+              responseDate: "2023-02-10",
+              allPrices: {
+                [0]: {
+                  time: "2023-02-03T00:00:00.000+01:00",
+                  total: 1.6548
+                }, ...
+              },
+            dayConsumption: {
+              cost: 19.9134230375,
+              use: 33.562,
+              avgPrice: 0
+            },
+            monthConsumption: {
+              cost: 464.2073114125,
+              use: 364.529,
+              avgPrice: 0
+            }
           }
           */
-  
+          this.saveToCache(priceObject);
+
+          this.allPrices = priceObject.allPrices;
+          this.dayConsumption = priceObject.dayConsumption;
+          this.monthConsumption = priceObject.monthConsumption;
+
           // Get min/max price for today and eventually tomorrow (if exists)
           this.calculate();
   
@@ -149,15 +174,15 @@ export default class Widget {
           maximumEl.style.color = this.colorByPrice(this.maxPrice);
     
           if (this.SHOW_DAY_CONSUMPTION) {
-            dayConsumptionCostEl.innerHTML = this.dayConsumptionCost.toFixed(2).replace('.', ',');
-            dayConsumptionUseEl.innerHTML = this.dayConsumptionUse.toFixed(2).replace('.', ',');
-            dayConsumptionAvgPriceEl.innerHTML = this.dayConsumptionAvgPrice;
+            dayConsumptionCostEl.innerHTML = this.dayConsumption.cost.toFixed(2).replace('.', ',');
+            dayConsumptionUseEl.innerHTML = this.dayConsumption.use.toFixed(2).replace('.', ',');
+            dayConsumptionAvgPriceEl.innerHTML = this.dayConsumption.avgPrice;
           }
     
           if (this.SHOW_MONTLY_CONSUMPTION) {
-            monthConsumptionCostEl.innerHTML = this.monthConsumptionCost.toFixed(2).replace('.', ',');
-            monthConsumptionUseEl.innerHTML = this.monthConsumptionUse.toFixed(2).replace('.', ',');
-            monthConsumptionAvgPriceEl.innerHTML = this.monthConsumptionAvgPrice;
+            monthConsumptionCostEl.innerHTML = this.monthConsumption.cost.toFixed(2).replace('.', ',');
+            monthConsumptionUseEl.innerHTML = this.monthConsumption.use.toFixed(2).replace('.', ',');
+            monthConsumptionAvgPriceEl.innerHTML = this.monthConsumption.avgPrice;
           }
   
           if (this.SHOW_GRAPH) {
@@ -229,37 +254,50 @@ export default class Widget {
   
           const res = await req.json();
           
-          const responseDate = new Date();
-          this.allPrices = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating.hourly.entries;
-          const price = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.total;
           const time = res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.startsAt;
           const date = new Date(time);
           const hour = date.getHours();
   
-          this.dayConsumptionCost = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalCost;
-          this.dayConsumptionUse = res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalConsumption;
-  
-          this.monthConsumptionCost = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalCost;
-          this.monthConsumptionUse = res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalConsumption;
-  
           return {
-            price,
+            price: res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo.current.total,
             hour,
-            responseDate
+            responseDate: new Date(),
+            allPrices: res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating.hourly.entries,
+            dayConsumption: {
+              cost: res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalCost,
+              use: res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo.totalConsumption,
+              avgPrice: 0
+            },
+            monthConsumption: {
+              cost: res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalCost,
+              use: res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo.totalConsumption,
+              avgPrice: 0
+            }
           };
         } catch(e) {
           if (!reTry) {
-            setTimeout(() => this.getCurrentPrice(true), 600);
-          } else {
-            this.addErrorLog(e);
-            throw e;
+            setTimeout(() => this.setupWidget(true), 60000);
+          } 
+
+          const priceObject = this.getFromCache();
+
+          if(priceObject !== null) {
+            return priceObject;
           }
+          
+          if (reTry) {
+            this.addErrorLog(e);
+
+            if(priceObject !== null) {
+              throw e;
+            }
+          } 
         }
     }
   
     calculate() {
-      this.dayConsumptionAvgPrice = Math.round(this.dayConsumptionCost / this.dayConsumptionUse * 100);
-      this.monthConsumptionAvgPrice = Math.round(this.monthConsumptionCost / this.monthConsumptionUse * 100);
+      this.dayConsumption.avgPrice = Math.round(this.dayConsumption.cost / this.dayConsumption.use * 100);
+      this.monthConsumption.avgPrice = Math.round(this.monthConsumption.cost / this.monthConsumption.use * 100);
   
       // Loop to find index for current hour
       this.currentPriceIndex = this.allPrices
@@ -441,7 +479,7 @@ export default class Widget {
         this.graphDivEl.append(graph);
       } catch(e) {
         if (!reTry) {
-          setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 5000);
+          setTimeout(() => this.getGraph(labels, colors, pointSizes, avgPrices, true), 60000);
         } else {
           this.addErrorLog(e);
           throw e;
@@ -505,5 +543,16 @@ export default class Widget {
       str = str ?? `${defaultValue}`;
   
       return str === 'true';
+    }
+
+    saveToCache(priceObject) {
+      window.localStorage.setItem('priceObject', JSON.stringify(priceObject));
+    }
+
+    getFromCache() {
+      const priceObject = JSON.parse(window.localStorage.getItem('priceObject'));
+      priceObject.responseDate = new Date(priceObject.responseDate);
+
+      return priceObject;
     }
   }
