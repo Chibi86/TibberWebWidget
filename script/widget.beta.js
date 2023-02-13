@@ -130,8 +130,8 @@ export default class Widget {
         const monthConsumptionUseEl = document.getElementById("month-consumption-use");
         const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
     
-
         let priceObject;
+
         try {
           priceObject = await this.getCurrentPrice(reTry);
         } catch (e) {
