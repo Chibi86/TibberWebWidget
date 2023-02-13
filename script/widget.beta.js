@@ -130,7 +130,18 @@ export default class Widget {
         const monthConsumptionUseEl = document.getElementById("month-consumption-use");
         const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
     
-        let priceObject = await this.getCurrentPrice(reTry);
+
+        let priceObject;
+        try {
+          priceObject = await this.getCurrentPrice(reTry);
+        } catch (e) {
+          if (!reTry) {
+            setTimeout(() => this.setupWidget(true), 60000);
+          }
+
+          priceObject = this.getFromCache();
+          this.addErrorLog(e);
+        }
     
         if (!!priceObject) {
           /*
@@ -275,23 +286,21 @@ export default class Widget {
             }
           };
         } catch(e) {
-          if (!reTry) {
-            setTimeout(() => this.setupWidget(true), 60000);
-          } 
+          throw e;
 
-          const priceObject = this.getFromCache();
+          // const priceObject = this.getFromCache();
 
-          if(priceObject !== null) {
-            return priceObject;
-          }
+          // if(priceObject !== null) {
+          //   return priceObject;
+          // }
           
-          if (reTry) {
-            this.addErrorLog(e);
+          // if (reTry) {
+          //   this.addErrorLog(e);
 
-            if(priceObject !== null) {
-              throw e;
-            }
-          } 
+          //   if(priceObject !== null) {
+          //     throw e;
+          //   }
+          // } 
         }
     }
   
