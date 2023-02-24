@@ -377,7 +377,7 @@ export default class Widget {
     );
 
     this.settingsButtonEl.src = `icons/settings-icon-${this.THEME}-theme.png`;
-    document.body.className = this.THEME;
+    document.getElementById("app").className = this.THEME;
 
     currentPriceEl.innerHTML = (this.currentPrice * 100).toFixed(0); // 1.35
     currentPriceEl.style.color = this.colorByPrice(this.currentPrice * 100);
@@ -522,39 +522,39 @@ export default class Widget {
           ] \
       }, \
       options:{ \
-          legend:{ \
-            labels:{ \
-                fontSize:90, \
-                fontColor:'${textColor}' \
-            } \
-          }, \
-          scales:{ \
-            yAxes:[ \
-                { \
-                  ticks:{ \
-                    beginAtZero:false, \
-                    fontSize:75, \
-                    autoSkip:true, \
-                    autoSkipPadding:200, \
-                    padding:50, \
-                    fontColor:'${textColor}' \
-                  } \
-                } \
-            ], \
-            xAxes:[ \
-                { \
-                  ticks:{ \
-                    fontSize:75, \
-                    autoSkip:true, \
-                    autoSkipPadding:200, \
-                    padding:80, \
-                    fontColor:'${textColor}' \
-                  } \
-                } \
-            ] \
+        legend:{ \
+          labels:{ \
+              fontSize:90, \
+              fontColor:'${textColor}' \
           } \
+        }, \
+        scales:{ \
+          yAxes:[ \
+              { \
+                ticks:{ \
+                  beginAtZero:false, \
+                  fontSize:75, \
+                  autoSkip:true, \
+                  autoSkipPadding:200, \
+                  padding:50, \
+                  fontColor:'${textColor}' \
+                } \
+              } \
+          ], \
+          xAxes:[ \
+              { \
+                ticks:{ \
+                  fontSize:75, \
+                  autoSkip:true, \
+                  autoSkipPadding:200, \
+                  padding:80, \
+                  fontColor:'${textColor}' \
+                } \
+              } \
+          ] \
+        } \
       } \
-      }`);
+    }`);
 
     try {
       const response = await fetch(url);
