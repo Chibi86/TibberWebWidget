@@ -9,6 +9,11 @@ window.onload = () => {
     new Widget();
   } else {
     document.title = document.title + " (beta)";
-    new WidgetBeta(true);
+
+    try {
+      new WidgetBeta(true);
+    } catch {
+      window.setTimeout(() => WidgetBeta(true), 15000);
+    }
   }
 };
