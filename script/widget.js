@@ -116,7 +116,7 @@ export default class Widget {
     const body = document.body;
     body.style.background = this.BACKGROUND_COLOR;
     body.style.color = this.TEXT_COLOR;
-    body.className = "dark";
+    document.getElementById("app").className = "dark";
 
     const links = document.querySelector("a");
     links.style.color = this.TEXT_COLOR;

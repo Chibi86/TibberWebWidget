@@ -1,14 +1,18 @@
 body {
   margin: 0;
+}
+
+#app {
+  margin-right: 8px;
   padding: 5px 15px 15px;
 }
 
-.dark {
+#app.dark {
   color: white !important;
   background-color: black !important;
 }
 
-.light {
+#app.light {
   color: black !important;
   background-color: white !important;
 }
