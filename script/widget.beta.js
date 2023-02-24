@@ -50,6 +50,7 @@ export default class Widget {
       window.localStorage.getItem("SHOW_MONTLY_CONSUMPTION"),
       true
     );
+    this.THEME = window.localStorage.getItem("THEME") ?? "dark";
 
     // Calculation variables
     this.minPrice = 10000000;
@@ -104,6 +105,10 @@ export default class Widget {
     this.showDayConsumptionEl = document.getElementById("show-day-consumption");
     this.showMontlyConsumptionEl = document.getElementById(
       "show-montly-consumption"
+    );
+    document.getElementById("theme-settings").classList.remove("hidden");
+    this.themeSettingsSelector = document.getElementById(
+      "theme-settings-selector"
     );
     this.settingsButtonEl = document.getElementById("settings-button");
     this.settingsButtonEl.addEventListener(
@@ -371,6 +376,9 @@ export default class Widget {
       "month-consumption-avg-price"
     );
 
+    this.settingsButtonEl.src = `icons/settings-icon-${this.THEME}-theme.png`;
+    document.body.className = this.THEME;
+
     currentPriceEl.innerHTML = (this.currentPrice * 100).toFixed(0); // 1.35
     currentPriceEl.style.color = this.colorByPrice(this.currentPrice * 100);
 
@@ -468,6 +476,7 @@ export default class Widget {
   }
 
   async getGraph(labels, colors, pointSizes, avgPrices, reTry = false) {
+    const textColor = this.THEME === "dark" ? "WHITE" : "BLACK";
     let url =
       "https://quickchart.io/chart?w=" +
       this.GRAPH_WIDTH +
@@ -516,7 +525,7 @@ export default class Widget {
           legend:{ \
             labels:{ \
                 fontSize:90, \
-                fontColor:'white' \
+                fontColor:'${textColor}' \
             } \
           }, \
           scales:{ \
@@ -528,7 +537,7 @@ export default class Widget {
                     autoSkip:true, \
                     autoSkipPadding:200, \
                     padding:50, \
-                    fontColor:'white' \
+                    fontColor:'${textColor}' \
                   } \
                 } \
             ], \
@@ -539,7 +548,7 @@ export default class Widget {
                     autoSkip:true, \
                     autoSkipPadding:200, \
                     padding:80, \
-                    fontColor:'white' \
+                    fontColor:'${textColor}' \
                   } \
                 } \
             ] \
@@ -588,6 +597,7 @@ export default class Widget {
     this.SHOW_GRAPH = this.showGraphEl.checked;
     this.SHOW_DAY_CONSUMPTION = this.showDayConsumptionEl.checked;
     this.SHOW_MONTLY_CONSUMPTION = this.showMontlyConsumptionEl.checked;
+    this.THEME = this.themeSettingsSelector.selectedOptions[0].value;
 
     window.localStorage.setItem("TIBBER_TOKEN", this.TIBBER_TOKEN);
     window.localStorage.setItem("HOME_NR", this.HOME_NR);
@@ -600,6 +610,7 @@ export default class Widget {
       "SHOW_MONTLY_CONSUMPTION",
       this.SHOW_MONTLY_CONSUMPTION
     );
+    window.localStorage.setItem("THEME", this.THEME);
 
     if (!this.SHOW_GRAPH) {
       this.graphDivEl.innerHTML = "";
@@ -626,6 +637,7 @@ export default class Widget {
     this.showGraphEl.checked = this.SHOW_GRAPH;
     this.showDayConsumptionEl.checked = this.SHOW_DAY_CONSUMPTION;
     this.showMontlyConsumptionEl.checked = this.SHOW_MONTLY_CONSUMPTION;
+    this.themeSettingsSelector.value = this.THEME;
 
     this.toggleElement(this.cancelButton, true);
   }
