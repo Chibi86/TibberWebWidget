@@ -67,6 +67,10 @@ body {
   padding: 0 25px;
 }
 
+.shows-solar-production #widget-top-section > div {
+  padding: 0 17px;
+}
+
 #tibber-widget.shows-day:not(.shows-montly)
   #widget-top-section
   > div#day-consumption,
@@ -114,6 +118,18 @@ body {
 
 #settings-button {
   cursor: pointer;
+}
+
+#minimum, .production span {
+  color: #35de3b;
+}
+
+#maximum, .shows-solar-production .consumption {
+  color: #de4035;
+}
+
+#tibber-widget:not(.shows-solar-production) .production {
+  display: none;
 }
 
 @font-face {
