@@ -27,16 +27,40 @@
           </div>
           <div id="day-consumption" class="hidden">
             DAGENS
-            <div><span id="day-consumption-cost"></span> kr</div>
-            <div><span id="day-consumption-use"></span> kWh</div>
+            <div>
+                <span id="day-consumption-cost" class="consumption"></span>
+                <span id="day-production-profit" class="production">
+                  / <span></span>
+                </span>
+                kr
+              </div>
+            <div>
+                <span id="day-consumption-use" class="consumption"></span>
+                <span id="day-production" class="production">
+                  / <span></span>
+                </span>
+                kWh
+              </div>
             <div class="smaller-text">
               SNITT: <span id="day-consumption-avg-price"></span> öre
             </div>
           </div>
           <div id="month-consumption" class="hidden">
             MÅNADENS
-            <div><span id="month-consumption-cost"></span> kr</div>
-            <div><span id="month-consumption-use"></span> kWh</div>
+            <div>
+                <span id="month-consumption-cost" class="consumption"></span>
+                <span id="month-production-profit" class="production">
+                  / <span></span>
+                </span>
+                kr
+              </div>
+            <div>
+                <span id="month-consumption-use" class="consumption"></span>
+                <span id="month-production" class="production">
+                  / <span></span>
+                </span>
+                kWh
+              </div>
             <div class="smaller-text">
               SNITT: <span id="month-consumption-avg-price"></span> öre
             </div>
@@ -80,8 +104,7 @@
         </p>
 
         <p>
-          <label for="show-day-consumption">Visa dagens konsumption:</label
-          ><br />
+          <label for="show-day-consumption">Visa dagens konsumption:</label><br />
           <input
             id="show-day-consumption"
             name="show-day-consumption"
@@ -101,21 +124,26 @@
           />
         </p>
 
-        <p id="theme-settings" class="hidden">
-          <label for="theme-settings-selector">Ändra färg-tema:</label><br />
-          <select id="theme-settings-selector">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </p>
+          <p id="solar-producer-settings" class="hidden">
+            <label for="solar-producer">Elproducent:</label
+            ><br />
+            <input
+              id="solar-producer"
+              name="solar-producer"
+              type="checkbox"
+            />
+          </p>
+
+          <p id="theme-settings" class="hidden">
+            <label for="theme-settings-selector">Ändra färg-tema:</label><br />
+            <select id="theme-settings-selector">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </p>
 
         <input type="submit" id="save-settings" value="Spara" />
-        <input
-          type="button"
-          id="cancel-settings"
-          class="hidden"
-          value="Avbryt"
-        />
+        <input type="button" id="cancel-settings" class="hidden" value="Avbryt" />
       </div>
 
       <footer id="bottom-menu">

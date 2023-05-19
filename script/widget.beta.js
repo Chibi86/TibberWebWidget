@@ -10,7 +10,6 @@ export default class Widget {
     // this.SUN_LIMIT_1 = 5.00; // When solar is above this, it's white
     // this.SUN_LIMIT_2 = 12.00; // When solar is above this limit, it's yellow
     // this.HIGH_PRICE = 3.5; // Max price for red color
-    this.SOLOR_PRODUCER = false;
 
     // Colors
     // Hex-code for backgroundscolor on widget (#000000 for black)
@@ -18,12 +17,6 @@ export default class Widget {
 
     // Hex-code for text color (#FFFFFF for white)
     this.TEXT_COLOR = "#FFFFFF";
-
-    // When price is over average price (red)
-    this.TEXT_COLOR_HIGH_PRICE = "#de4035";
-
-    // When price is under average price (green)
-    this.TEXT_COLOR_LOW_PRICE = "#35de3b";
 
     // How many hour to show before and after current hour
     this.BACK_IN_TIME = 3;
@@ -50,6 +43,7 @@ export default class Widget {
       window.localStorage.getItem("SHOW_MONTLY_CONSUMPTION"),
       true
     );
+    this.SOLAR_PRODUCER = this.convertStringToBoolean(window.localStorage.getItem("SOLAR_PRODUCER"), true);
     this.THEME = window.localStorage.getItem("THEME") ?? "dark";
 
     // Calculation variables
@@ -66,13 +60,23 @@ export default class Widget {
     this.dayConsumption = {
       cost: 0,
       use: 0,
-      avgPrice: 0,
+      avgPrice: 0
+    };
+
+    this.dayProduction = {
+      profit: 0,
+      production: 0
     };
 
     this.monthConsumption = {
       cost: 0,
       use: 0,
-      avgPrice: 0,
+      avgPrice: 0
+    };
+
+    this.monthProduction = {
+      profit: 0,
+      production: 0
     };
 
     this.thisHour = new Date();
@@ -103,23 +107,18 @@ export default class Widget {
     this.debugModeEl = document.getElementById("debug-mode");
     this.showGraphEl = document.getElementById("show-graph");
     this.showDayConsumptionEl = document.getElementById("show-day-consumption");
-    this.showMontlyConsumptionEl = document.getElementById(
-      "show-montly-consumption"
-    );
+    this.showMontlyConsumptionEl = document.getElementById("show-montly-consumption");
+    this.solarProducerEl = document.getElementById("solar-producer");
     document.getElementById("theme-settings").classList.remove("hidden");
-    this.themeSettingsSelector = document.getElementById(
-      "theme-settings-selector"
-    );
+    document.getElementById("solar-producer-settings").classList.remove("hidden");
+    this.themeSettingsSelector = document.getElementById("theme-settings-selector");
     this.settingsButtonEl = document.getElementById("settings-button");
     this.settingsButtonEl.addEventListener(
       "click",
       this.openSettings.bind(this)
     );
     this.saveButton = document.getElementById("save-settings");
-    this.saveButton.addEventListener(
-      "click",
-      this.saveSettingsLocalStorage.bind(this)
-    );
+    this.saveButton.addEventListener("click", this.saveSettingsLocalStorage.bind(this));
     this.cancelButton = document.getElementById("cancel-settings");
     this.cancelButton.addEventListener("click", () => this.toggleWidget(true));
 
@@ -167,43 +166,58 @@ export default class Widget {
   async getCurrentPrice() {
     const url = `https://api.tibber.com/v1-beta/gql`;
     const query = `{ \
-            viewer { \
+          viewer { \
             homes { \
-                appNickname \
-                    address { \
-                    address1 \
-                } \
-                currentSubscription { \
+              appNickname \
+              address { \
+                  address1 \
+              } \
+              currentSubscription { \
                 priceInfo{
-                    current{
-                        total startsAt
-                    }
+                  current{
+                    total \
+                    startsAt \
+                  }
                 }
                 priceRating { \
-                    hourly { \
+                  hourly { \
                     entries { \
-                        total \
-                        time \
+                      total \
+                      time \
                     } \
-                    } \
+                  } \
                 } \
-                } \
-                dayConsumption: consumption (resolution: HOURLY, last: ${new Date().getHours()}) { \
+              } \
+              dayConsumption: consumption (resolution: HOURLY, last: ${new Date().getHours()}) { \
                 pageInfo { \
-                    totalConsumption \
-                    totalCost \
+                  totalConsumption \
+                  totalCost \
                 } \
-                } \
-                monthConsumption: consumption (resolution: DAILY, last: ${
-                  new Date().getDate() - 1
-                }) { \
+              } \
+              monthConsumption: consumption (resolution: DAILY, last: ${
+                new Date().getDate() - 1
+              }) { \
                 pageInfo { \
-                    totalConsumption \
-                    totalCost \
+                  totalConsumption \
+                  totalCost \
                 } \
+              } \
+              dayProduction: production (resolution: HOURLY, last: ${new Date().getHours()}) { \
+                pageInfo { \
+                    totalProduction \
+                    totalProfit \
                 } \
+              } \
+              monthProduction: production (resolution: DAILY, last: ${
+                new Date().getDate() - 1
+              }) { \
+                pageInfo { \
+                    totalProduction \
+                    totalProfit \
+                } \
+              } \
             } \
-            } \
+          } \
         }`;
 
     try {
@@ -222,35 +236,35 @@ export default class Widget {
 
       const res = await req.json();
 
-      const time =
-        res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo
-          .current.startsAt;
+      const home = res.data.viewer.homes[this.HOME_NR];
+
+      const time = home.currentSubscription.priceInfo.current.startsAt;
       const date = new Date(time);
       const hour = date.getHours();
 
       return {
-        price:
-          res.data.viewer.homes[this.HOME_NR].currentSubscription.priceInfo
-            .current.total,
+        price: home.currentSubscription.priceInfo.current.total,
         hour,
         responseDate: new Date(),
-        allPrices:
-          res.data.viewer.homes[this.HOME_NR].currentSubscription.priceRating
-            .hourly.entries,
+        allPrices: home.currentSubscription.priceRating.hourly.entries,
         dayConsumption: {
-          cost: res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo
-            .totalCost,
-          use: res.data.viewer.homes[this.HOME_NR].dayConsumption.pageInfo
-            .totalConsumption,
+          cost: home.dayConsumption.pageInfo.totalCost,
+          use: home.dayConsumption.pageInfo.totalConsumption,
           avgPrice: 0,
+        },
+        dayProduction: {
+          profit: home.dayProduction.pageInfo.totalProfit,
+          production: home.dayProduction.pageInfo.totalProduction
         },
         monthConsumption: {
-          cost: res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo
-            .totalCost,
-          use: res.data.viewer.homes[this.HOME_NR].monthConsumption.pageInfo
-            .totalConsumption,
+          cost: home.monthConsumption.pageInfo.totalCost,
+          use: home.monthConsumption.pageInfo.totalConsumption,
           avgPrice: 0,
         },
+        monthProduction: {
+          profit: home.monthProduction.pageInfo.totalProfit,
+          production: home.monthProduction.pageInfo.totalProduction
+        }
       };
     } catch (e) {
       throw e;
@@ -287,10 +301,18 @@ export default class Widget {
           use: 33.562,
           avgPrice: 0
         },
+        dayProduction: {
+          profit: 9.5603845,
+          production: 33.054
+        },
         monthConsumption: {
           cost: 464.2073114125,
           use: 364.529,
           avgPrice: 0
+        },
+        monthProduction: {
+          profit: 263.09465218,
+          production: 724.4
         }
       }
   */
@@ -299,7 +321,9 @@ export default class Widget {
 
     this.allPrices = priceObject.allPrices;
     this.dayConsumption = priceObject.dayConsumption;
+    this.dayProduction = priceObject.dayProduction;
     this.monthConsumption = priceObject.monthConsumption;
+    this.monthProduction = priceObject.monthProduction;
     this.currentPrice = priceObject.price;
 
     // Get min/max price for today and eventually tomorrow (if exists)
@@ -333,9 +357,9 @@ export default class Widget {
     this.maxPrice = 0;
 
     for (let i = this.startIndex; i <= this.endIndex; i++) {
-      //   if (this.SOLOR_PRODUCER) {
-      //     this.allPrices[i].total = this.allPrices[i].total+(NETT_KWH/100);
-      //   }
+      // if () {
+      //   this.allPrices[i].total = this.allPrices[i].total + this.NETT_KWH / 100;
+      // }
 
       avgPrice += this.allPrices[i].total;
       this.prices.push(Math.round(this.allPrices[i].total * 100));
@@ -354,38 +378,29 @@ export default class Widget {
 
   async render(responseDate) {
     const currentPriceEl = document.getElementById("current-price");
-    const minimumEl = document.getElementById("minimum");
     const minimumSpan = document.querySelector("#minimum span");
-    const maximumEl = document.getElementById("maximum");
     const maximumSpan = document.querySelector("#maximum span");
     const updatedEl = document.getElementById("updated");
-    const dayConsumptionCostEl = document.getElementById(
-      "day-consumption-cost"
-    );
+    const dayConsumptionCostEl = document.getElementById("day-consumption-cost");
     const dayConsumptionUseEl = document.getElementById("day-consumption-use");
-    const dayConsumptionAvgPriceEl = document.getElementById(
-      "day-consumption-avg-price"
-    );
-    const monthConsumptionCostEl = document.getElementById(
-      "month-consumption-cost"
-    );
-    const monthConsumptionUseEl = document.getElementById(
-      "month-consumption-use"
-    );
-    const monthConsumptionAvgPriceEl = document.getElementById(
-      "month-consumption-avg-price"
-    );
+    const dayConsumptionAvgPriceEl = document.getElementById("day-consumption-avg-price");
+    const monthConsumptionCostEl = document.getElementById("month-consumption-cost");
+    const monthConsumptionUseEl = document.getElementById("month-consumption-use");
+    const monthConsumptionAvgPriceEl = document.getElementById("month-consumption-avg-price");
+
+    const dayProductionProfitEl = document.querySelector("#day-production-profit span");
+    const dayProductionEl = document.querySelector("#day-production span");
+    const monthProductionProfitEl = document.querySelector("#month-production-profit span");
+    const monthProductionEl = document.querySelector("#month-production span");
 
     this.settingsButtonEl.src = `icons/settings-icon-${this.THEME}-theme.png`;
     document.getElementById("app").className = this.THEME;
 
     currentPriceEl.innerHTML = (this.currentPrice * 100).toFixed(0); // 1.35
-    currentPriceEl.style.color = this.colorByPrice(this.currentPrice * 100);
+    currentPriceEl.className = this.colorByPrice(this.currentPrice * 100);
 
     minimumSpan.innerText = this.minPrice.toFixed(0);
-    minimumEl.style.color = this.colorByPrice(this.minPrice);
     maximumSpan.innerText = this.maxPrice.toFixed(0);
-    maximumEl.style.color = this.colorByPrice(this.maxPrice);
 
     if (this.SHOW_DAY_CONSUMPTION) {
       dayConsumptionCostEl.innerHTML = this.dayConsumption.cost
@@ -394,7 +409,7 @@ export default class Widget {
       dayConsumptionUseEl.innerHTML = this.dayConsumption.use
         .toFixed(2)
         .replace(".", ",");
-      dayConsumptionAvgPriceEl.innerHTML = this.dayConsumption.avgPrice;
+      dayConsumptionAvgPriceEl.innerHTML = this.dayConsumption.avgPrice ?? 0;
     }
 
     if (this.SHOW_MONTLY_CONSUMPTION) {
@@ -404,7 +419,23 @@ export default class Widget {
       monthConsumptionUseEl.innerHTML = this.monthConsumption.use
         .toFixed(2)
         .replace(".", ",");
-      monthConsumptionAvgPriceEl.innerHTML = this.monthConsumption.avgPrice;
+      monthConsumptionAvgPriceEl.innerHTML =
+        this.monthConsumption.avgPrice ?? 0;
+    }
+
+    if (this.SOLAR_PRODUCER) {
+      dayProductionProfitEl.innerHTML = this.dayProduction.profit
+        .toFixed(2)
+        .replace(".", ",");
+      dayProductionEl.innerHTML = this.dayProduction.production
+        .toFixed(2)
+        .replace(".", ",");
+      monthProductionProfitEl.innerHTML = this.monthProduction.profit
+        .toFixed(2)
+        .replace(".", ",");
+      monthProductionEl.innerHTML = this.monthProduction.production
+        .toFixed(2)
+        .replace(".", ",");
     }
 
     updatedEl.innerHTML = responseDate.toLocaleTimeString("sv-SE", {
@@ -427,14 +458,9 @@ export default class Widget {
     this.toggleElement(this.graphSectionEl, this.SHOW_GRAPH);
     this.toggleElement(this.errorLogsEl, this.beta);
 
-    this.tibberWidgetEl.classList.toggle(
-      "shows-day",
-      this.SHOW_DAY_CONSUMPTION
-    );
-    this.tibberWidgetEl.classList.toggle(
-      "shows-montly",
-      this.SHOW_MONTLY_CONSUMPTION
-    );
+    this.tibberWidgetEl.classList.toggle("shows-day", this.SHOW_DAY_CONSUMPTION);
+    this.tibberWidgetEl.classList.toggle("shows-montly", this.SHOW_MONTLY_CONSUMPTION);
+    this.tibberWidgetEl.classList.toggle("shows-solar-production", this.SOLAR_PRODUCER);
     this.tibberWidgetEl.classList.toggle("shows-graph", this.SHOW_GRAPH);
   }
 
@@ -587,8 +613,8 @@ export default class Widget {
 
   colorByPrice(price) {
     return price <= this.avgPrice
-      ? this.TEXT_COLOR_LOW_PRICE
-      : this.TEXT_COLOR_HIGH_PRICE;
+      ? 'minimum'
+      : 'maximum';
   }
 
   saveSettingsLocalStorage() {
@@ -597,19 +623,15 @@ export default class Widget {
     this.SHOW_GRAPH = this.showGraphEl.checked;
     this.SHOW_DAY_CONSUMPTION = this.showDayConsumptionEl.checked;
     this.SHOW_MONTLY_CONSUMPTION = this.showMontlyConsumptionEl.checked;
+    this.SOLAR_PRODUCER = this.solarProducerEl.checked;
     this.THEME = this.themeSettingsSelector.selectedOptions[0].value;
 
     window.localStorage.setItem("TIBBER_TOKEN", this.TIBBER_TOKEN);
     window.localStorage.setItem("HOME_NR", this.HOME_NR);
     window.localStorage.setItem("SHOW_GRAPH", this.SHOW_GRAPH);
-    window.localStorage.setItem(
-      "SHOW_DAY_CONSUMPTION",
-      this.SHOW_DAY_CONSUMPTION
-    );
-    window.localStorage.setItem(
-      "SHOW_MONTLY_CONSUMPTION",
-      this.SHOW_MONTLY_CONSUMPTION
-    );
+    window.localStorage.setItem("SHOW_DAY_CONSUMPTION", this.SHOW_DAY_CONSUMPTION);
+    window.localStorage.setItem("SHOW_MONTLY_CONSUMPTION", this.SHOW_MONTLY_CONSUMPTION);
+    window.localStorage.setItem("SOLAR_PRODUCER", this.SOLAR_PRODUCER);
     window.localStorage.setItem("THEME", this.THEME);
 
     if (!this.SHOW_GRAPH) {
@@ -637,6 +659,7 @@ export default class Widget {
     this.showGraphEl.checked = this.SHOW_GRAPH;
     this.showDayConsumptionEl.checked = this.SHOW_DAY_CONSUMPTION;
     this.showMontlyConsumptionEl.checked = this.SHOW_MONTLY_CONSUMPTION;
+    this.solarProducerEl.checked = this.SOLAR_PRODUCER;
     this.themeSettingsSelector.value = this.THEME;
 
     this.toggleElement(this.cancelButton, true);
